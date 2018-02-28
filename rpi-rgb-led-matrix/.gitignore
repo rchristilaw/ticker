@@ -10,3 +10,4 @@ c-example
 clock
 *.dll
 *.exe
+*.pyc

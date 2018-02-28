@@ -3,10 +3,9 @@ import time
 import sys
 import os
 
-import led-base
-
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
+from ledoptions import LedOptions
 
 
 class LedBase(object):
@@ -17,8 +16,8 @@ class LedBase(object):
         print("Running")
 
     def process(self):
-
-        options = LedOptions.getOptions()
+        ledOptions = LedOptions()
+        options = ledOptions.getOptions()
 
         self.matrix = RGBMatrix(options = options)
 

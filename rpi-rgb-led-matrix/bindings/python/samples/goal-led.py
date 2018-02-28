@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # Display a runtext with double-buffering.
-from led-base import LedBase
+from ledbase import LedBase
 from rgbmatrix import graphics
 import time
 
 
 class GoalLed(LedBase):
-    def __init__(self, *args, **kwargs):
-        super(RunText, self).__init__(*args, **kwargs)
-    
 
     def run(self):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
@@ -25,10 +22,11 @@ class GoalLed(LedBase):
             if (pos + len < 0):
                 pos = offscreen_canvas.width
 
-            time.sleep(0.05)
+            time.sleep(0.025)
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
 
 
 # Main function
 if __name__ == "__main__":
     run_text = GoalLed()
+    run_text.process()
