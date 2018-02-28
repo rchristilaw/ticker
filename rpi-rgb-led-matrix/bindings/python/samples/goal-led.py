@@ -15,6 +15,20 @@ class GoalLed(LedBase):
         pos = offscreen_canvas.width
         my_text = "Leafs Score"
         print "Before While Loop"
+
+        max_brightness = self.matrix.brightness
+        count = 0
+
+        while count < 3:
+            self.matrix.Fill(255, 0, 0)
+            self.usleep(10000)
+
+            if self.matrix.brightness < 1:
+                self.matrix.brightness = max_brightness
+                count += 1
+            else:
+                self.matrix.brightness -= 1
+
         while True:
             offscreen_canvas.Clear()
             len = graphics.DrawText(offscreen_canvas, font, pos, 12, textColor, my_text)
