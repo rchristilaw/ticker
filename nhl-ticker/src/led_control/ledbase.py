@@ -12,10 +12,10 @@ class LedBase(object):
     def usleep(self, value):
         time.sleep(value / 1000000.0)
 
-    def run(self):
+    def run(selfm teamName):
         print("Running")
 
-    def process(self):
+    def process(self, teamName):
         ledOptions = LedOptions()
         options = ledOptions.getOptions()
 
@@ -24,7 +24,7 @@ class LedBase(object):
         try:
             # Start loop
             print("Press CTRL-C to stop sample")
-            self.run()
+            self.run(teamName)
         except KeyboardInterrupt:
             print("Exiting\n")
             sys.exit(0)

@@ -7,14 +7,13 @@ import time
 
 class GoalLed(LedBase):
 
-    def run(self):
+    def run(self, teamName):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
         font.LoadFont("../../../fonts/9x15.bdf")
         textColor = graphics.Color(0, 0, 255)
         pos = offscreen_canvas.width
-        my_text = "Leafs Score!"
-        print "Before While Loop"
+        my_text = teamName + " score!"
 
         max_brightness = self.matrix.brightness
         count = 0
