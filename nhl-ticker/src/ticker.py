@@ -4,7 +4,7 @@ import json
 import time
 import requests
 import platform
-from dateutil.parser import parse
+#from dateutil.parser import parse
 
 from constants import url_constants
 from constants import team_constants
@@ -62,7 +62,7 @@ def pollLiveFeed(liveFeedUrl):
 
     startTime = gameData['gameData']['datetime']['dateTime']
 
-    print parse(startTime)
+    #print parse(startTime)
 
     game = Game(awayTeam, homeTeam, startTime, feedUrl)
 
@@ -76,7 +76,7 @@ def pollLiveFeed(liveFeedUrl):
 
 def initGame():
 
-    url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + str(team_constants.TOR) + "?expand=team.schedule.next"
+    url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + str(team_constants.NSH) + "?expand=team.schedule.next"
     r = requests.get(url)
     nextGame = r.json()
 
