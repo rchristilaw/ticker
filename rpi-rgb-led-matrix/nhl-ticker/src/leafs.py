@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # Display a runtext with double-buffering.
-from goalLed import GoalLed
+#from goalLed import GoalLed
 import urllib2
 import json
 import time
 import requests
+
+
+#def goalScored(teamId):
+
 
 
 
@@ -32,12 +36,12 @@ def getAndParseData(url, goal_led):
 
     if (awayscoreNew != awayScore):
        awayScore = awayscoreNew
-       goal_led.process()
+       #goal_led.process()
        print "Pens Scored"
 
     if (homescoreNew != homeScore):
        homeScore = homescoreNew
-       goal_led.process()
+       #goal_led.process()
        print "Bruins Scored"
 
 
@@ -47,7 +51,7 @@ def pollNhlApi():
     awayScore = 3
     url = "http://statsapi.web.nhl.com/api/v1/teams/5?expand=team.schedule.next"
 
-    goal_led = GoalLed()
+    goal_led = "TEST" #GoalLed()
 
     print "Starting NHL API Poll"
 
