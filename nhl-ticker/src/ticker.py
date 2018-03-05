@@ -28,20 +28,33 @@ def getAndParseData(game, goal_led):
     r = requests.get(game.getFeedUrl())
     gamedata = r.json()
         
-    homescoreNew = gamedata['liveData']['linescore']['teams']['away']['goals']
-    awayscoreNew = gamedata['liveData']['linescore']['teams']['home']['goals']
-        
-    score = "Score: %d - %d" % (homescoreNew, awayscoreNew)
-        
-    print score
+    homeScore = gamedata['liveData']['linescore']['teams']['home']['goals']
+    awayScore = gamedata['liveData']['linescore']['teams']['away']['goals']
+    
 
-    if (awayscoreNew != game.getAwayTeam().getScore()):
-       game.getAwayTeam().setScore(awayscoreNew)
-       goal_led.process(game.getAwayTeam().getName())
+    periodData = gamedata['liveData']['linescore']
+    period = periodData['currentPeriodOrdinal']
+    periodTime = periodData['currentPeriodTimeRemaining']
 
-    if (homescoreNew != game.getHomeTeam().getScore()):
-       game.getHomeTeam().setScore(homescoreNew)
-       goal_led.process(game.getHomeTeam().getName())
+    #score = "Score: %d - %d" % (homescoreNew, awayscoreNew)
+        
+    #print score
+
+    refreshScore = False
+
+    if (awayScore != game.getAwayTeam().getScore()):
+        game.getAwayTeam().setScore(awayScore)
+        goal_led.goalScored(game.getAwayTeam().getName())
+        refreshScore = True
+
+    if (homeScore != game.getHomeTeam().getScore()):
+        game.getHomeTeam().setScore(homeScore)
+        goal_led.goalScored(game.getHomeTeam().getName())
+        refreshScore = True
+    
+    if (refreshScore or game.getCurrentTime() != periodTime):
+        game.setCurrentTime(periodTime)
+        goal_led.writeScore(game.getAwayTeam().getAbbreviation(), str(awayScore), game.getHomeTeam().getAbbreviation(), str(homeScore), period, periodTime)
 
 def createTeam(teamData):
     teamId = teamData['id']
@@ -69,6 +82,8 @@ def pollLiveFeed(liveFeedUrl):
     goal_led = GoalLed()
 
     print "Starting NHL API Poll"
+    
+    #goal_led.writeScore(str(5), str(3))
 
     while True:
         getAndParseData(game, goal_led)
@@ -76,7 +91,7 @@ def pollLiveFeed(liveFeedUrl):
 
 def initGame():
 
-    url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + str(team_constants.NSH) + "?expand=team.schedule.next"
+    url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + str(team_constants.WPG) + "?expand=team.schedule.next"
     r = requests.get(url)
     nextGame = r.json()
 

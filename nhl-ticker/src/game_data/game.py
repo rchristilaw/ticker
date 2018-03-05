@@ -4,6 +4,7 @@ class Game:
         self.homeTeam = homeTeam
         self.startTime = startTime
         self.feedUrl = feedUrl
+        self.currentTime = "20:00"
 
     def getHomeTeam(self):
         return self.homeTeam
@@ -16,3 +17,9 @@ class Game:
 
     def getFeedUrl(self):
         return self.feedUrl
+
+    def getCurrentTime(self):
+        return self.currentTime
+
+    def setCurrentTime(self, time):
+        self.currentTime = time

@@ -9,7 +9,6 @@ class Team:
         self.score = score
 
     def getScore(self):
-        self.score += 1
         return self.score
 
     def getName(self):
