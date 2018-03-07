@@ -1,4 +1,4 @@
-class Game:
+class Game(object):
     def __init__(self, awayTeam, homeTeam, startTime, feedUrl):
         self.awayTeam = awayTeam
         self.homeTeam = homeTeam

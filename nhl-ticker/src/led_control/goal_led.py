@@ -57,8 +57,3 @@ class GoalLed(object):
         color = graphics.Color(255, 0, 0)
         graphics.DrawText(canvas, font, 1, 7, color, awayAbrv + " " + awayScore + "  " + time)
         graphics.DrawText(canvas, font, 1, 15, color, homeAbrv + " " + homeScore + "  " + period)
-
-# Main function
-if __name__ == "__main__":
-    run_text = GoalLed()
-    run_text.process("Maple Leafs")

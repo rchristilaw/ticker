@@ -4,103 +4,86 @@ import json
 import time
 import requests
 import platform
-#from dateutil.parser import parse
+
+import util
 
 from constants import url_constants
 from constants import team_constants
 from game_data.game import Game
 from game_data.team import Team
+from game_data.live_game_data import LiveGameData
+from led_service import LedService
 
+class Ticker(object):
+    def __init__(self):
+        self.ledService = LedService()
+        self.game = None
 
-if (platform.system() == "Windows"):
-    from goal_led_sim import GoalLed 
-else:
-    from led_control.goalLed import GoalLed
+    def writeInitialScore(self):
+        gameDay = self.game.getStartTime().strftime("%A")[0:3]
+        startTime = self.game.getStartTime().strftime("%H:%M")
+        self.ledService.writeScore(self.game.getAwayTeam().getAbbreviation(), " ", self.game.getHomeTeam().getAbbreviation(), " ", gameDay, startTime)
 
-
-#def goalScored(teamId):
-
-
-
-
-def getAndParseData(game, goal_led):
-
-    r = requests.get(game.getFeedUrl())
-    gamedata = r.json()
+    def getAndParseData(self):
+        self.writeInitialScore()
         
-    homeScore = gamedata['liveData']['linescore']['teams']['home']['goals']
-    awayScore = gamedata['liveData']['linescore']['teams']['away']['goals']
-    
+        while True:
+            if util.isBeforeCurrentTime(self.game.getStartTime()):
+                r = requests.get(self.game.getFeedUrl())
+                gamedata = LiveGameData(r.json())
+                    
+                homeScore = gamedata.getHomeScore()
+                awayScore = gamedata.getAwayScore()
 
-    periodData = gamedata['liveData']['linescore']
-    period = periodData['currentPeriodOrdinal']
-    periodTime = periodData['currentPeriodTimeRemaining']
+                period = gamedata.getCurrentPeriod
+                periodTimeRemaining = gamedata.getPeriodTimeRemaining()
 
-    #score = "Score: %d - %d" % (homescoreNew, awayscoreNew)
-        
-    #print score
+                refreshScore = False
 
-    refreshScore = False
+                if (awayScore != self.game.getAwayTeam().getScore()):
+                    self.game.getAwayTeam().setScore(awayScore)
+                    self.ledService.goalScored(self.game.getAwayTeam().getName())
+                    refreshScore = True
 
-    if (awayScore != game.getAwayTeam().getScore()):
-        game.getAwayTeam().setScore(awayScore)
-        goal_led.goalScored(game.getAwayTeam().getName())
-        refreshScore = True
-
-    if (homeScore != game.getHomeTeam().getScore()):
-        game.getHomeTeam().setScore(homeScore)
-        goal_led.goalScored(game.getHomeTeam().getName())
-        refreshScore = True
-    
-    if (refreshScore or game.getCurrentTime() != periodTime):
-        game.setCurrentTime(periodTime)
-        goal_led.writeScore(game.getAwayTeam().getAbbreviation(), str(awayScore), game.getHomeTeam().getAbbreviation(), str(homeScore), period, periodTime)
-
-def createTeam(teamData):
-    teamId = teamData['id']
-    teamName = teamData['teamName']
-    teamAbbreviation = teamData['abbreviation']
-
-    return Team(teamId, teamName, teamAbbreviation)
-
-def pollLiveFeed(liveFeedUrl):
-    feedUrl = url_constants.NHL_API_BASE_URL + liveFeedUrl
-
-    r = requests.get(feedUrl)
-    gameData = r.json()
+                if (homeScore != self.game.getHomeTeam().getScore()):
+                    self.game.getHomeTeam().setScore(homeScore)
+                    self.ledService.goalScored(self.game.getHomeTeam().getName())
+                    refreshScore = True
+                
+                if  refreshScore or (period is not None and self.game.getCurrentTime() != periodTimeRemaining):
+                    self.game.setCurrentTime(periodTimeRemaining)
+                    self.ledService.writeScore(self.game.getAwayTeam().getAbbreviation(), str(awayScore), self.game.getHomeTeam().getAbbreviation(), str(homeScore), period, periodTimeRemaining)
+            
+            time.sleep(3)
 
 
-    awayTeam = createTeam(gameData['gameData']['teams']['away'])
-    homeTeam = createTeam(gameData['gameData']['teams']['home'])
+    def pollLiveFeed(self, liveFeedUrl):
+        feedUrl = url_constants.NHL_API_BASE_URL + liveFeedUrl
 
-    startTime = gameData['gameData']['datetime']['dateTime']
+        r = requests.get(feedUrl)
+        gameData = r.json()
 
-    #print parse(startTime)
+        awayTeam = Team(gameData['gameData']['teams']['away'])
+        homeTeam = Team(gameData['gameData']['teams']['home'])
+        utcStartTime = gameData['gameData']['datetime']['dateTime']
 
-    game = Game(awayTeam, homeTeam, startTime, feedUrl)
 
-    goal_led = GoalLed()
+        startTime = util.convertUtcDateTimeToLocal(utcStartTime)
 
-    print "Starting NHL API Poll"
-    
-    #goal_led.writeScore(str(5), str(3))
+        self.game = Game(awayTeam, homeTeam, startTime, feedUrl)
+        self.getAndParseData()
 
-    while True:
-        getAndParseData(game, goal_led)
-        time.sleep(3)
+    def initGame(self):
+        url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + str(team_constants.TOR) + "?expand=team.schedule.next"
+        r = requests.get(url)
+        nextGame = r.json()
 
-def initGame():
+        liveFeedUrl = nextGame['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]['link']
 
-    url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + str(team_constants.WPG) + "?expand=team.schedule.next"
-    r = requests.get(url)
-    nextGame = r.json()
 
-    liveFeedUrl = nextGame['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]['link']
-
-    #print liveFeedUrl
-
-    pollLiveFeed(liveFeedUrl)
+        self.pollLiveFeed(liveFeedUrl)
 
 # Main function
 if __name__ == "__main__":
-    initGame() #pollNhlApi()
+    ticker = Ticker()
+    ticker.initGame()
