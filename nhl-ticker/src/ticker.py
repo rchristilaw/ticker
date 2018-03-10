@@ -20,15 +20,17 @@ class Ticker(object):
     def __init__(self):
         self.ledService = LedService()
         self.game = None
+        self.active = True
 
     def writeInitialScore(self):
         gameDay = self.game.getStartTime().strftime("%A")[0:3]
         startTime = self.game.getStartTime().strftime("%H:%M")
         self.ledService.writeScore(self.game.getAwayTeam().getAbbreviation(), " ", self.game.getHomeTeam().getAbbreviation(), " ", gameDay, startTime)
 
-    def getAndParseData(self):
-        
-        while True:
+    def processGameData(self):
+        self.active = True
+
+        while self.active is True:
             if util.isBeforeCurrentTime(self.game.getStartTime()):
                 r = requests.get(self.game.getFeedUrl())
                 gamedata = LiveGameData(r.json())
@@ -57,6 +59,8 @@ class Ticker(object):
             
             time.sleep(3)
 
+
+
     def setGame(self, teamName): 
         url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + teamName + "?expand=team.schedule.next"
 
@@ -78,13 +82,15 @@ class Ticker(object):
         self.game = Game(awayTeam, homeTeam, startTime, feedUrl)
         self.writeInitialScore()
 
+        if (self.active is False):
+            thread = Thread(target = self.processGameData)
+            thread.start()
+
     def initGame(self, teamName):
         self.setGame(teamName)
         
-        thread = Thread(target = self.getAndParseData)
+        thread = Thread(target = self.processGameData)
         thread.start()
-        # thread.join()
-        # self.getAndParseData()
 
 # Main function
 if __name__ == "__main__":
