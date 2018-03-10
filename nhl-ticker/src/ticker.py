@@ -14,6 +14,8 @@ from game_data.team import Team
 from game_data.live_game_data import LiveGameData
 from led_service import LedService
 
+from threading import Thread
+
 class Ticker(object):
     def __init__(self):
         self.ledService = LedService()
@@ -25,7 +27,6 @@ class Ticker(object):
         self.ledService.writeScore(self.game.getAwayTeam().getAbbreviation(), " ", self.game.getHomeTeam().getAbbreviation(), " ", gameDay, startTime)
 
     def getAndParseData(self):
-        self.writeInitialScore()
         
         while True:
             if util.isBeforeCurrentTime(self.game.getStartTime()):
@@ -56,8 +57,13 @@ class Ticker(object):
             
             time.sleep(3)
 
+    def setGame(self, teamName): 
+        url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + teamName + "?expand=team.schedule.next"
 
-    def pollLiveFeed(self, liveFeedUrl):
+        r = requests.get(url)
+        nextGame = r.json()
+
+        liveFeedUrl = nextGame['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]['link']
         feedUrl = url_constants.NHL_API_BASE_URL + liveFeedUrl
 
         r = requests.get(feedUrl)
@@ -67,23 +73,20 @@ class Ticker(object):
         homeTeam = Team(gameData['gameData']['teams']['home'])
         utcStartTime = gameData['gameData']['datetime']['dateTime']
 
-
         startTime = util.convertUtcDateTimeToLocal(utcStartTime)
 
         self.game = Game(awayTeam, homeTeam, startTime, feedUrl)
-        self.getAndParseData()
+        self.writeInitialScore()
 
-    def initGame(self):
-        url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + str(team_constants.TOR) + "?expand=team.schedule.next"
-        r = requests.get(url)
-        nextGame = r.json()
-
-        liveFeedUrl = nextGame['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]['link']
-
-
-        self.pollLiveFeed(liveFeedUrl)
+    def initGame(self, teamName):
+        self.setGame(teamName)
+        
+        thread = Thread(target = self.getAndParseData)
+        thread.start()
+        # thread.join()
+        # self.getAndParseData()
 
 # Main function
 if __name__ == "__main__":
     ticker = Ticker()
-    ticker.initGame()
+    ticker.initGame(str(team_constants.TOR))
