@@ -14,3 +14,6 @@ class LedService(object):
 
     def goalScored(self, teamName):
         self.goalLed.goalScored(teamName)
+
+    def clearLed(self):
+        self.goalLed.clearLed()

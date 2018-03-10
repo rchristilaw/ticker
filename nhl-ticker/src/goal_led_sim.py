@@ -5,3 +5,6 @@ class GoalLed:
     def writeScore(self, awayAbrv, awayScore, homeAbrv, homeScore, period, periodTime):
         print awayAbrv + " " + awayScore + "  " + period
         print homeAbrv + " " + homeScore + "  " + periodTime
+
+    def clearLed(self):
+        print "Clear LED Screen"

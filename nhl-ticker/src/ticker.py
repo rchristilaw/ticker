@@ -59,6 +59,9 @@ class Ticker(object):
             
             time.sleep(3)
 
+    def stopGame(self):
+        self.active = False
+        self.ledService.clearLed()
 
 
     def setGame(self, teamName): 

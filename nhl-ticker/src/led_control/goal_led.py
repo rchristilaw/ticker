@@ -57,3 +57,7 @@ class GoalLed(object):
         color = graphics.Color(255, 0, 0)
         graphics.DrawText(canvas, font, 1, 7, color, awayAbrv + " " + awayScore + "  " + time)
         graphics.DrawText(canvas, font, 1, 15, color, homeAbrv + " " + homeScore + "  " + period)
+
+    def clearLed(self):
+        canvas = self.matrix
+        canvas.Clear()

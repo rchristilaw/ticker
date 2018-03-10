@@ -18,8 +18,13 @@ class TickerHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
         post_data = self.rfile.read(content_length) # <--- Gets the data itself
         self._set_headers()
-        self.wfile.write("<html><body><h1>POST!</h1><pre>" + post_data + "</pre></body></html>")
-        self.server.ticker.setGame(post_data)
+
+        if post_data == "OFF":
+            self.wfile.write("Stopping Game Loop")
+            self.server.ticker.stopGame()
+        else:
+            self.wfile.write("Changing game to team id: " + post_data)
+            self.server.ticker.setGame(post_data)
         
 def run():
     server = HTTPServer(('', 80), TickerHandler)
