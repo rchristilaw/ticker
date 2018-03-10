@@ -50,14 +50,14 @@ class Ticker(object):
 
                 if (awayScore != self.game.getAwayTeam().getScore()):
                     self.game.getAwayTeam().setScore(awayScore)
-                     refreshScore = True
-                    if isFirstLoop is not true:
+                    refreshScore = True
+                    if isFirstLoop is False:
                         self.ledService.goalScored(self.game.getAwayTeam().getName())
 
                 if (homeScore != self.game.getHomeTeam().getScore()):
                     self.game.getHomeTeam().setScore(homeScore)
                     refreshScore = True
-                    if isFirstLoop is not true:
+                    if isFirstLoop is False:
                         self.ledService.goalScored(self.game.getHomeTeam().getName())
                    
                 
