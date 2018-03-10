@@ -23,14 +23,18 @@ class Ticker(object):
         self.active = True
 
     def writeInitialScore(self):
-        gameDay = self.game.getStartTime().strftime("%A")[0:3]
-        startTime = self.game.getStartTime().strftime("%H:%M")
+        localStartTime = util.convertUtcDateTimeToLocal(self.game.getStartTime())
+
+        gameDay = localStartTime.strftime("%A")[0:3]
+        startTime = localStartTime.strftime("%H:%M")
+
         self.ledService.writeScore(self.game.getAwayTeam().getAbbreviation(), " ", self.game.getHomeTeam().getAbbreviation(), " ", gameDay, startTime)
 
     def processGameData(self):
         self.active = True
 
         while self.active is True:
+            
             if util.isBeforeCurrentTime(self.game.getStartTime()):
                 r = requests.get(self.game.getFeedUrl())
                 gamedata = LiveGameData(r.json())
@@ -38,7 +42,7 @@ class Ticker(object):
                 homeScore = gamedata.getHomeScore()
                 awayScore = gamedata.getAwayScore()
 
-                period = gamedata.getCurrentPeriod
+                period = gamedata.getCurrentPeriod()
                 periodTimeRemaining = gamedata.getPeriodTimeRemaining()
 
                 refreshScore = False
@@ -80,9 +84,7 @@ class Ticker(object):
         homeTeam = Team(gameData['gameData']['teams']['home'])
         utcStartTime = gameData['gameData']['datetime']['dateTime']
 
-        startTime = util.convertUtcDateTimeToLocal(utcStartTime)
-
-        self.game = Game(awayTeam, homeTeam, startTime, feedUrl)
+        self.game = Game(awayTeam, homeTeam, util.convertToUtcDatetime(utcStartTime), feedUrl)
         self.writeInitialScore()
 
         if (self.active is False):
@@ -98,4 +100,4 @@ class Ticker(object):
 # Main function
 if __name__ == "__main__":
     ticker = Ticker()
-    ticker.initGame(str(team_constants.TOR))
+    ticker.initGame(str(team_constants.COL))

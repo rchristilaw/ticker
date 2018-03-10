@@ -2,17 +2,17 @@ from datetime import datetime
 from dateutil import tz
 import pytz
 
+def convertToUtcDatetime(utcDatetimeString):
+    return datetime.strptime(utcDatetimeString, '%Y-%m-%dT%H:%M:%SZ')
+
 def convertUtcDateTimeToLocal(utcTime):
-    
     from_zone = tz.tzutc()
     to_zone = tz.tzlocal()
 
-    utc = datetime.strptime(utcTime, '%Y-%m-%dT%H:%M:%SZ')
-
-    utc = utc.replace(tzinfo=from_zone)
-    localTime = utc.astimezone(to_zone)
+    utcTime = utcTime.replace(tzinfo=from_zone)
+    localTime = utcTime.astimezone(to_zone)
 
     return localTime
 
 def isBeforeCurrentTime(time):
-    return time < pytz.utc.localize(datetime.now())
+    return time < datetime.utcnow()
