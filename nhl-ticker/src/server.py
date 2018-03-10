@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from ticker import Ticker
 
@@ -38,7 +40,7 @@ class TickerHandler(BaseHTTPRequestHandler):
             self.server.ticker.setGame(post_data)
         
 def run():
-    server = HTTPServer(('', 80), TickerHandler)
+    server = HTTPServer(('', 8080), TickerHandler)
     server.ticker = Ticker()
     server.ticker.initGame("10")
     server.serve_forever()
