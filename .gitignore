@@ -5,3 +5,7 @@
 *.dll
 *.exe
 *.pyc
+server/Include/
+server/Lib/
+server/Scripts/
+server/tcl/
