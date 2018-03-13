@@ -1,6 +1,9 @@
 class GoalLed:
     def goalScored(self, teamName):
-        print teamName + " score!"
+        if teamName is not None:
+            print teamName + " score!"
+        else:
+            print "GOAL!"
 
     def writeScore(self, awayAbrv, awayScore, homeAbrv, homeScore, period, periodTime):
         print awayAbrv + " " + awayScore + "  " + period

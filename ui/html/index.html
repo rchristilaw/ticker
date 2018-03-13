@@ -10,24 +10,28 @@
 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script> -->
 <script>
 
-function sendRequest(data) {
+function sendRequest(requestType, data) {
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
 		if (this.readyState == 4 && this.status == 200) {
 		  console.log("Call success")
 		}
 	};
-	xhttp.open("POST", "http://192.168.1.101:8080", true);
+	xhttp.open("POST", "http://192.168.1.101:8080/" + requestType, true);
 	xhttp.send(data);
 }
 
 function setGame() {
 	gameVal = $('#gameId').val();
-	sendRequest(gameVal);
+	sendRequest("setGame",gameVal);
 }
 
 function stopGame() {
-	sendRequest("OFF");
+	sendRequest("turnOff");
+}
+
+function activateGoal() {
+	sendRequest("activateGoalLight");
 }
 </script>
 </head>
@@ -70,6 +74,7 @@ function stopGame() {
 	<!-- <input type="text" id="gameId" value="10"> -->
 	<button onclick="setGame()">Set Game</button>
 	<button onclick="stopGame()">Stop Game</button>
+	<button onclick="activateGoal()">Goal!</button>
 
 </body>
 </html>

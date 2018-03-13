@@ -71,6 +71,8 @@ class Ticker(object):
         self.active = False
         self.ledService.clearLed()
 
+    def activateGoalLight(self):
+        self.ledService.goalScored(None)
 
     def setGame(self, teamName): 
         url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + teamName + "?expand=team.schedule.next"

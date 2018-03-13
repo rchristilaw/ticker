@@ -20,11 +20,10 @@ class TickerHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "X-Requested-With, Content-type")
         self.end_headers()
 
-    def do_GET(self):
-        self._set_headers()
-        self.wfile.write("<html><body><h1>hi!" + self.server.test + "</h1></body></html>")
-
     def do_HEAD(self):
+        self._set_headers()
+
+    def do_GET(self):
         self._set_headers()
         
     def do_POST(self):
@@ -32,12 +31,12 @@ class TickerHandler(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length) # <--- Gets the data itself
         self._set_headers()
 
-        if post_data == "OFF":
-            self.wfile.write("Stopping Game Loop")
-            self.server.ticker.stopGame()
-        else:
+        if self.path == '/setGame':
             self.wfile.write("Changing game to team id: " + post_data)
             self.server.ticker.setGame(post_data)
+        elif self.path == '/turnOff':
+            self.server.ticker.stopGame()
+        elif self.path          
         
 def run():
     server = HTTPServer(('', 8080), TickerHandler)
