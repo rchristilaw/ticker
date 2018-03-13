@@ -9,3 +9,10 @@ server/Include/
 server/Lib/
 server/Scripts/
 server/tcl/
+
+server/bin/
+server/include/
+server/lib/
+server/local/
+
+server/build/

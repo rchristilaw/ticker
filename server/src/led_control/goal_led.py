@@ -19,7 +19,7 @@ class GoalLed(object):
     def goalScored(self, teamName):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
-        font.LoadFont("../../fonts/9x15.bdf")
+        font.LoadFont("../rgblibrary/fonts/9x15.bdf")
         textColor = graphics.Color(0, 0, 255)
         pos = offscreen_canvas.width
         
@@ -56,7 +56,7 @@ class GoalLed(object):
     
     def writeScore(self, awayAbrv, awayScore, homeAbrv, homeScore, time, period):
         font = graphics.Font()
-        font.LoadFont("../../fonts/5x8.bdf")
+        font.LoadFont("../rgblibrary/fonts/5x8.bdf")
         canvas = self.matrix
         canvas.Clear()
         color = graphics.Color(255, 0, 0)

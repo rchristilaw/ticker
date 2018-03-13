@@ -36,7 +36,6 @@ class TickerHandler(BaseHTTPRequestHandler):
             self.server.ticker.setGame(post_data)
         elif self.path == '/turnOff':
             self.server.ticker.stopGame()
-        elif self.path          
         
 def run():
     server = HTTPServer(('', 8080), TickerHandler)
