@@ -5,7 +5,7 @@ import time
 import requests
 import platform
 
-import util
+from common import util
 
 from constants import url_constants
 from constants import team_constants

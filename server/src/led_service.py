@@ -1,7 +1,7 @@
 import platform
 
 if (platform.system() == "Windows"):
-    from goal_led_sim import GoalLed 
+    from led_control.goal_led_sim import GoalLed 
 else:
     from led_control.goal_led import GoalLed
 
