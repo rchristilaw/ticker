@@ -6,28 +6,24 @@ from ticker import Ticker
 
 app = Flask(__name__)
 cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
 
 ticker = Ticker()
 
 @app.route("/setGame", methods=['POST'])
-@cross_origin()
 def setGame():
     ticker.setGame(request.data)
     return "OK"
 
 @app.route("/turnOff", methods=['POST'])
-@cross_origin()
 def turnOff():
     ticker.stopGame()
     return "OK"
 
 @app.route("/activateGoalLight", methods=['POST'])
-@cross_origin()
 def activateGoalLight():
     ticker.activateGoalLight()
     return "OK"
 
 if __name__ == "__main__":
-    ticker.initGame("10") 
+    # ticker.initGame("10") 
     app.run(debug=True, host='0.0.0.0', port=8080)
