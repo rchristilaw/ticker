@@ -1,47 +1,33 @@
 #!/usr/bin/env python
 
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from flask import Flask, request
+from flask_cors import CORS, cross_origin
 from ticker import Ticker
 
-class TickerHandler(BaseHTTPRequestHandler):
-    def do_OPTIONS(self):
-        self.send_response(200, "ok")
-        self.send_header('Access-Control-Allow-Credentials', 'true')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header("Access-Control-Allow-Headers", "X-Requested-With, Content-type")
+app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
-    def _set_headers(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html')
-        self.send_header('Access-Control-Allow-Credentials', 'true')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header("Access-Control-Allow-Headers", "X-Requested-With, Content-type")
-        self.end_headers()
+ticker = Ticker()
 
-    def do_HEAD(self):
-        self._set_headers()
+@app.route("/setGame", methods=['POST'])
+@cross_origin()
+def setGame():
+    ticker.setGame(request.data)
+    return "OK"
 
-    def do_GET(self):
-        self._set_headers()
-        
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-        post_data = self.rfile.read(content_length) # <--- Gets the data itself
-        self._set_headers()
+@app.route("/turnOff", methods=['POST'])
+@cross_origin()
+def turnOff():
+    ticker.stopGame()
+    return "OK"
 
-        if self.path == '/setGame':
-            self.wfile.write("Changing game to team id: " + post_data)
-            self.server.ticker.setGame(post_data)
-        elif self.path == '/turnOff':
-            self.server.ticker.stopGame()
-        
-def run():
-    server = HTTPServer(('', 8080), TickerHandler)
-    server.ticker = Ticker()
-    server.ticker.initGame("10")
-    server.serve_forever()
+@app.route("/activateGoalLight", methods=['POST'])
+@cross_origin()
+def activateGoalLight():
+    ticker.activateGoalLight()
+    return "OK"
 
 if __name__ == "__main__":
-    run()
+    ticker.initGame("10") 
+    app.run(debug=True, host='0.0.0.0', port=8080)

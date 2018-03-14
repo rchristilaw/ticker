@@ -17,7 +17,7 @@ function sendRequest(requestType, data) {
 		  console.log("Call success")
 		}
 	};
-	xhttp.open("POST", "http://192.168.1.101:8080/" + requestType, true);
+	xhttp.open("POST", "http://127.0.0.1:8080/" + requestType, true);
 	xhttp.send(data);
 }
 
