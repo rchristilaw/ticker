@@ -17,3 +17,6 @@ class LedService(object):
 
     def clearLed(self):
         self.goalLed.clearLed()
+
+    def happyStPats(self):
+        self.goalLed.happyStPats()

@@ -66,3 +66,50 @@ class GoalLed(object):
     def clearLed(self):
         canvas = self.matrix
         canvas.Clear()
+
+        
+    def happyStPats(self):
+        offscreen_canvas = self.matrix.CreateFrameCanvas()
+        font = graphics.Font()
+        font.LoadFont("../rgblibrary/fonts/9x15.bdf")
+        textColor = graphics.Color(0, 255, 0)
+        pos = offscreen_canvas.width
+        
+        max_brightness = self.matrix.brightness
+        count = 0
+
+        while count < 4:
+            self.matrix.Fill(0, 255, 0)
+            time.sleep(.01)
+
+            if self.matrix.brightness < 1:
+                self.matrix.brightness = max_brightness
+                count += 1
+            else:
+                self.matrix.brightness -= 1
+        
+        goalText = "Happy St. Patrick's Day!"
+
+        textCount = 0
+        while textCount < 2:
+            offscreen_canvas.Clear()
+            len = graphics.DrawText(offscreen_canvas, font, pos, 13, textColor, goalText)
+            pos -= 1
+            if (pos + len < 0):
+                pos = offscreen_canvas.width
+                textCount += 1
+
+            time.sleep(0.02)
+            offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
+   
+        count = 0
+
+        while count < 4:
+            self.matrix.Fill(0, 255, 0)
+            time.sleep(.01)
+
+            if self.matrix.brightness < 1:
+                self.matrix.brightness = max_brightness
+                count += 1
+            else:
+                self.matrix.brightness -= 1

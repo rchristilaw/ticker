@@ -11,3 +11,6 @@ class GoalLed:
 
     def clearLed(self):
         print "Clear LED Screen"
+
+    def happyStPats(self):
+        print "Happy St Pats"

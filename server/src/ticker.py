@@ -20,7 +20,7 @@ class Ticker(object):
     def __init__(self):
         self.ledService = LedService()
         self.game = None
-        self.active = True
+        self.active = False
 
     def writeInitialScore(self):
         localStartTime = util.convertUtcDateTimeToLocal(self.game.getStartTime())
@@ -32,7 +32,7 @@ class Ticker(object):
 
     def processGameData(self):
         self.active = True
-
+        
         isFirstLoop = True #Don't show goal animation on first loop
         while self.active is True:
             
@@ -64,6 +64,8 @@ class Ticker(object):
                 if  refreshScore or (period is not None and self.game.getCurrentTime() != periodTimeRemaining):
                     self.game.setCurrentTime(periodTimeRemaining)
                     self.ledService.writeScore(self.game.getAwayTeam().getAbbreviation(), str(awayScore), self.game.getHomeTeam().getAbbreviation(), str(homeScore), period, periodTimeRemaining)
+                
+                isFirstLoop = False
             
             time.sleep(3)
 
@@ -105,5 +107,7 @@ class Ticker(object):
 
 # Main function
 if __name__ == "__main__":
-    ticker = Ticker()
-    ticker.initGame(str(team_constants.COL))
+    #ticker = Ticker()
+    #ticker.initGame(str(team_constants.COL))
+    led = LedService()
+    led.happyStPats()
