@@ -1,8 +1,8 @@
 class Team(object):
-    def __init__(self, teamData):
-        self.teamId = teamData['id']
-        self.name = teamData['teamName']
-        self.abbreviation = teamData['abbreviation']
+    def __init__(self, teamId, name, abbrev):
+        self.teamId = teamId
+        self.name = name
+        self.abbreviation = abbrev
         self.score = 0
 
     def setScore(self, score):

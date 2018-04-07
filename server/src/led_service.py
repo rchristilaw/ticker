@@ -1,6 +1,6 @@
 import platform
 
-if (platform.system() == "Windows"):
+if (platform.system() != "Linux"):
     from led_control.goal_led_sim import GoalLed 
 else:
     from led_control.goal_led import GoalLed

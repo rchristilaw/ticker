@@ -1,9 +1,11 @@
+import requests
+from live_game_data import LiveGameData
+
 class Game(object):
-    def __init__(self, awayTeam, homeTeam, startTime, feedUrl):
+    def __init__(self, awayTeam, homeTeam, startTime):
         self.awayTeam = awayTeam
         self.homeTeam = homeTeam
         self.startTime = startTime
-        self.feedUrl = feedUrl
         self.currentTime = "20:00"
 
     def getHomeTeam(self):
@@ -14,9 +16,6 @@ class Game(object):
 
     def getStartTime(self):
         return self.startTime
-
-    def getFeedUrl(self):
-        return self.feedUrl
 
     def getCurrentTime(self):
         return self.currentTime
