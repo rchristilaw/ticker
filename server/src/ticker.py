@@ -5,6 +5,11 @@ import time
 import requests
 import platform
 
+import sys, os
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../../nhlapi/data'))
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../../nhlapi/nhlapi'))
+from nhlapi import NhlApi
+
 from common import util
 
 from constants import url_constants
@@ -12,7 +17,8 @@ from constants import team_constants
 from game_data.game import Game
 from game_data.team import Team
 from game_data.live_game_data import LiveGameData
-from led_service import LedService
+# from led_service import LedService
+
 
 from threading import Thread
 
@@ -109,5 +115,9 @@ class Ticker(object):
 if __name__ == "__main__":
     #ticker = Ticker()
     #ticker.initGame(str(team_constants.COL))
-    led = LedService()
-    led.happyStPats()
+    # led = LedService()
+    # led.happyStPats()
+    # print sys.path
+    print os.path.dirname(__file__)
+    nhl = NhlApi()
+    print nhl.getTeamsList()
