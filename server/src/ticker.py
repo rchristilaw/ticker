@@ -17,7 +17,7 @@ from constants import team_constants
 from game_data.game import Game
 from game_data.team import Team
 from game_data.live_game_data import LiveGameData
-# from led_service import LedService
+from led_service import LedService
 
 
 from threading import Thread
@@ -27,6 +27,7 @@ class Ticker(object):
         self.ledService = LedService()
         self.game = None
         self.active = False
+        self.nhl = NhlApi()
 
     def writeInitialScore(self):
         localStartTime = util.convertUtcDateTimeToLocal(self.game.getStartTime())
@@ -41,37 +42,12 @@ class Ticker(object):
         
         isFirstLoop = True #Don't show goal animation on first loop
         while self.active is True:
-            
-            if util.isBeforeCurrentTime(self.game.getStartTime()):
-                r = requests.get(self.game.getFeedUrl())
-                gamedata = LiveGameData(r.json())
-                    
-                homeScore = gamedata.getHomeScore()
-                awayScore = gamedata.getAwayScore()
+            self.game = self.nhl.getUpdatedGame(self.game)
 
-                period = gamedata.getCurrentPeriod()
-                periodTimeRemaining = gamedata.getPeriodTimeRemaining()
-
-                refreshScore = False
-
-                if (awayScore != self.game.getAwayTeam().getScore()):
-                    self.game.getAwayTeam().setScore(awayScore)
-                    refreshScore = True
-                    if isFirstLoop is False:
-                        self.ledService.goalScored(self.game.getAwayTeam().getName())
-
-                if (homeScore != self.game.getHomeTeam().getScore()):
-                    self.game.getHomeTeam().setScore(homeScore)
-                    refreshScore = True
-                    if isFirstLoop is False:
-                        self.ledService.goalScored(self.game.getHomeTeam().getName())
-                   
+            if (self.game.getHasChanges() is True):
+                self.ledService.writeScore(self.game.getAwayTeam().getAbbreviation(), str(self.game.getAwayTeam().getScore()), self.game.getHomeTeam().getAbbreviation(), str(self.game.getHomeTeam().getScore()), self.game.getPeriod(), self.game.getCurrentTime())
                 
-                if  refreshScore or (period is not None and self.game.getCurrentTime() != periodTimeRemaining):
-                    self.game.setCurrentTime(periodTimeRemaining)
-                    self.ledService.writeScore(self.game.getAwayTeam().getAbbreviation(), str(awayScore), self.game.getHomeTeam().getAbbreviation(), str(homeScore), period, periodTimeRemaining)
-                
-                isFirstLoop = False
+                # isFirstLoop = False
             
             time.sleep(3)
 
@@ -83,22 +59,7 @@ class Ticker(object):
         self.ledService.goalScored(None)
 
     def setGame(self, teamName): 
-        url = url_constants.NHL_API_BASE_URL + "api/v1/teams/" + teamName + "?expand=team.schedule.next"
-
-        r = requests.get(url)
-        nextGame = r.json()
-
-        liveFeedUrl = nextGame['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]['link']
-        feedUrl = url_constants.NHL_API_BASE_URL + liveFeedUrl
-
-        r = requests.get(feedUrl)
-        gameData = r.json()
-
-        awayTeam = Team(gameData['gameData']['teams']['away'])
-        homeTeam = Team(gameData['gameData']['teams']['home'])
-        utcStartTime = gameData['gameData']['datetime']['dateTime']
-
-        self.game = Game(awayTeam, homeTeam, util.convertToUtcDatetime(utcStartTime), feedUrl)
+        self.game = self.nhl.getNextGameForTeam(teamName)
         self.writeInitialScore()
 
         if (self.active is False):
@@ -113,11 +74,10 @@ class Ticker(object):
 
 # Main function
 if __name__ == "__main__":
-    #ticker = Ticker()
-    #ticker.initGame(str(team_constants.COL))
+    ticker = Ticker()
+    ticker.initGame("TOR")
     # led = LedService()
     # led.happyStPats()
     # print sys.path
-    print os.path.dirname(__file__)
-    nhl = NhlApi()
-    print nhl.getTeamsList()
+    
+    # print nhl.getTeamsList()
