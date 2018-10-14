@@ -6,9 +6,8 @@ import requests
 import platform
 
 import sys, os
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../../nhlapi/data'))
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../../nhlapi/nhlapi'))
-from nhlapi import NhlApi
+
+from nhlapi.nhlapi import NhlApi
 
 from common import util
 
@@ -75,15 +74,6 @@ class Ticker(object):
 # Main function
 if __name__ == "__main__":
     ticker = Ticker()
-<<<<<<< HEAD
     ticker.initGame("TOR")
-    # led = LedService()
-    # led.happyStPats()
-    # print sys.path
-    
-    # print nhl.getTeamsList()
-=======
-    ticker.initGame(str(team_constants.TOR))
     #led = LedService()
     #led.happyStPats()
->>>>>>> Ticker mods for broken board panel
