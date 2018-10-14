@@ -14,7 +14,7 @@ class LedOptions:
         options.hardware_mapping = "regular"
         options.rows = 16
         options.cols = 32
-        options.chain_length = 2
+        options.chain_length = 1
         options.parallel = 1
         options.row_address_type = 0
         options.multiplexing = 0

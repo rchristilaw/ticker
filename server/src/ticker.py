@@ -64,20 +64,26 @@ class Ticker(object):
 
         if (self.active is False):
             thread = Thread(target = self.processGameData)
+            thread.daemon = True
             thread.start()
 
     def initGame(self, teamName):
         self.setGame(teamName)
-        
-        thread = Thread(target = self.processGameData)
-        thread.start()
+#        thread = Thread(target = self.processGameData)
+#        thread.start()
 
 # Main function
 if __name__ == "__main__":
     ticker = Ticker()
+<<<<<<< HEAD
     ticker.initGame("TOR")
     # led = LedService()
     # led.happyStPats()
     # print sys.path
     
     # print nhl.getTeamsList()
+=======
+    ticker.initGame(str(team_constants.TOR))
+    #led = LedService()
+    #led.happyStPats()
+>>>>>>> Ticker mods for broken board panel
