@@ -72,7 +72,7 @@ class GoalLed(object):
         canvas.Clear()
 
         
-    def happyStPats(self):
+    def writeText(self, text):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
         font.LoadFont("../rgblibrary/fonts/9x15.bdf")
@@ -91,13 +91,11 @@ class GoalLed(object):
                 count += 1
             else:
                 self.matrix.brightness -= 1
-        
-        goalText = "Happy St. Patrick's Day!"
 
         textCount = 0
         while textCount < 2:
             offscreen_canvas.Clear()
-            len = graphics.DrawText(offscreen_canvas, font, pos, 13, textColor, goalText)
+            len = graphics.DrawText(offscreen_canvas, font, pos, 13, textColor, text)
             pos -= 1
             if (pos + len < 0):
                 pos = offscreen_canvas.width

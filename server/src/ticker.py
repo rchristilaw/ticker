@@ -68,12 +68,8 @@ class Ticker(object):
 
     def initGame(self, teamName):
         self.setGame(teamName)
-#        thread = Thread(target = self.processGameData)
-#        thread.start()
 
 # Main function
 if __name__ == "__main__":
     ticker = Ticker()
     ticker.initGame("TOR")
-    #led = LedService()
-    #led.happyStPats()
