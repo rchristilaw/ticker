@@ -56,12 +56,16 @@ class GoalLed(object):
     
     def writeScore(self, awayAbrv, awayScore, homeAbrv, homeScore, time, period):
         font = graphics.Font()
-        font.LoadFont("../rgblibrary/fonts/5x8.bdf")
+        font.LoadFont("../rgblibrary/fonts/4x6.bdf")
         canvas = self.matrix
         canvas.Clear()
-        color = graphics.Color(255, 0, 0)
-        graphics.DrawText(canvas, font, 1, 7, color, awayAbrv + " " + awayScore)
-        graphics.DrawText(canvas, font, 1, 15, color, homeAbrv + " " + homeScore)
+
+        awayColour = graphics.Color(255, 0, 0)
+        homeColour = graphics.Color(255, 128,0)
+        
+        graphics.DrawText(canvas, font, 1, 5, awayColour, awayAbrv + "  " + awayScore)
+        graphics.DrawText(canvas, font, 1, 10, homeColour, homeAbrv + "  " + homeScore)
+        graphics.DrawText(canvas, font, 1, 16, awayColour, period + " " + time)
 
     def clearLed(self):
         canvas = self.matrix
