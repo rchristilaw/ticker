@@ -38,12 +38,22 @@ class Ticker(object):
 
     def processGameData(self):
         self.active = True
+
+        homeScore = self.game.getHomeTeam().getScore()
+        awayScore = self.game.getAwayTeam().getScore()
         
         isFirstLoop = True #Don't show goal animation on first loop
         while self.active is True:
             self.game = self.nhl.getUpdatedGame(self.game)
 
             if (self.game.getHasChanges() is True):
+
+                if (awayScore != self.game.getAwayTeam().getScore()):
+                    self.ledService.goalScored(self.game.getAwayTeam().getName())
+
+                if (homeScore != self.game.getHomeTeam().getScore()):
+                    self.ledService.goalScored(self.game.getHomeTeam().getName())
+
                 self.ledService.writeScore(self.game.getAwayTeam().getAbbreviation(), str(self.game.getAwayTeam().getScore()), self.game.getHomeTeam().getAbbreviation(), str(self.game.getHomeTeam().getScore()), self.game.getPeriod(), self.game.getCurrentTime())
                 
                 # isFirstLoop = False
