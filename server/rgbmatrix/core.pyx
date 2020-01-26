@@ -158,6 +158,23 @@ cdef class RGBMatrixOptions:
             self.__py_encoded_led_rgb_sequence = value.encode('utf-8')
             self.__options.led_rgb_sequence = self.__py_encoded_led_rgb_sequence
 
+    property pixel_mapper_config:
+        def __get__(self): return self.__options.pixel_mapper_config
+        def __set__(self, value):
+            self.__py_encoded_pixel_mapper_config = value.encode('utf-8')
+            self.__options.pixel_mapper_config = self.__py_encoded_pixel_mapper_config
+
+    property panel_type:
+        def __get__(self): return self.__options.panel_type
+        def __set__(self, value):
+            self.__py_encoded_panel_type = value.encode('utf-8')
+            self.__options.panel_type = self.__py_encoded_panel_type
+
+    property pwm_dither_bits:
+        def __get__(self): return self.__options.pwm_dither_bits
+        def __set__(self, uint8_t value): self.__options.pwm_dither_bits = value
+
+
     # RuntimeOptions properties
 
     property gpio_slowdown:
@@ -171,7 +188,6 @@ cdef class RGBMatrixOptions:
     property drop_privileges:
         def __get__(self): return self.__runtime_options.drop_privileges
         def __set__(self, uint8_t value): self.__runtime_options.drop_privileges = value
-
 
 cdef class RGBMatrix(Canvas):
     def __cinit__(self, int rows = 0, int chains = 0, int parallel = 0,

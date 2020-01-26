@@ -19,11 +19,12 @@ class LedOptions:
         options.row_address_type = 0
         options.multiplexing = 0
         options.pwm_bits = 11
-        options.brightness = 100
+        options.brightness = 50
         options.pwm_lsb_nanoseconds = 130
         options.led_rgb_sequence = "RGB"
         options.show_refresh_rate = 0
         options.gpio_slowdown = 4
         options.disable_hardware_pulsing = False
-
+        options.scan_mode=1
+        
         return options

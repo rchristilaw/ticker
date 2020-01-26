@@ -27,14 +27,15 @@
 #include "gpio.h"
 #include "canvas.h"
 #include "thread.h"
-#include "transformer.h"
+#include "pixel-mapper.h"
 
 namespace rgb_matrix {
 class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
+
 namespace internal {
 class Framebuffer;
-class PixelMapper;
+class PixelDesignatorMap;
 }
 
 // The RGB matrix provides the framebuffer and the facilities to constantly
@@ -102,6 +103,10 @@ public:
     // Flag: --led-pwm-lsb-nanoseconds
     int pwm_lsb_nanoseconds;
 
+    // The lower bits can be time-dithered for higher refresh rate.
+    // Flag: --led-pwm-dither-bits
+    int pwm_dither_bits;
+
     // The initial brightness of the panel in percent. Valid range is 1..100
     // Default: 100
     // Flag: --led-brightness
@@ -134,6 +139,15 @@ public:
     // In case the internal sequence of mapping is not "RGB", this contains the
     // real mapping. Some panels mix up these colors.
     const char *led_rgb_sequence;  // Flag: --led-rgb-sequence
+
+    // A string describing a sequence of pixel mappers that should be applied
+    // to this matrix. A semicolon-separated list of pixel-mappers with optional
+    // parameter.
+    const char *pixel_mapper_config;   // Flag: --led-pixel-mapper
+
+    // Panel type. Typically an empty string or NULL, but some panels need
+    // a particular initialization sequence, so this is used for that.
+    const char *panel_type;  // Flag: --led-panel-type
   };
 
   // Create an RGBMatrix.
@@ -153,7 +167,7 @@ public:
 
   // Simple constructor if you don't need the fine-control with the
   // Options object.
-  RGBMatrix(GPIO *io, int rows = 16, int chained_displays = 2,
+  RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1,
             int parallel_displays = 1);
 
   virtual ~RGBMatrix();
@@ -191,6 +205,12 @@ public:
   // Returns 'false' if it couldn't start because GPIO was not set yet.
   bool StartRefresh();
 
+  // Apply a pixel mapper. This is used to re-map pixels according to some
+  // scheme implemented by the PixelMapper. Does not take ownership of the
+  // mapper. Mapper can be NULL, in which case nothing happens.
+  // Returns a boolean indicating if this was successful.
+  bool ApplyPixelMapper(const PixelMapper *mapper);
+
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // limited comic-colors, 1 might be sufficient. Lower require less CPU and
   // increases refresh-rate.
@@ -210,6 +230,34 @@ public:
   // This will only affect newly set pixels.
   void SetBrightness(uint8_t brightness);
   uint8_t brightness();
+
+  //-- GPIO interaction
+
+  // Return pointer to GPIO object for your own interaction with free
+  // pins. But don't mess with bits already in use by the matrix :)
+  GPIO *gpio() { return io_; }
+
+  // This function will return whenever the GPIO input pins
+  // change (pins that are not already in use for output, that is) or the
+  // timeout is reached. You need to have reserved the inputs with
+  // gpio()->RequestInputs(...) first (e.g.
+  //   gpio()->RequestInputs((1<<25)|(1<<24));
+  //
+  // A positive timeout waits the given amount of milliseconds for a change
+  // (e.g. a button-press) to occur; if there is no change, it will just
+  // return the last value.
+  // If you just want to know how the pins are right now, call with zero
+  // timeout.
+  // A negative number waits forever and will only return if there is a change.
+  //
+  // Note, while you can poll the gpio()->Read() function directly, it is
+  // not recommended as this might occur during the display update which might
+  // result in flicker.
+  // This function only samples between display refreshes and is more
+  // convenient as it allows to wait for a change.
+  //
+  // Returns the bitmap of all GPIO input pins.
+  uint32_t AwaitInputChange(int timeout_ms);
 
   //-- Double- and Multibuffering.
 
@@ -241,37 +289,6 @@ public:
   // 28Hz animation, nicely locked to the frame-rate).
   FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned framerate_fraction = 1);
 
-  // Set image transformer that maps the logical canvas coordinates to the
-  // physical canvas coordinates.
-  // This preprocesses the transformation for static pixel mapping once.
-  //
-  // (In the rate case that you have transformers that dynamically change
-  //  their behavior at runtime or do transformations on the color, you have to
-  //  manually use them to wrap canvases.)
-  void ApplyStaticTransformer(const CanvasTransformer &transformer);
-
-  // Don't use this function anymore, use ApplyStaticTransformer() instead.
-  // See demo-main.cc how.
-  //
-  // This used to somewhat work with dynamic tranformations, but it
-  // was confusing as that didn't apply to FrameCanvases as well.
-  // If you have static transformations that can be done at program start
-  // (such as rotation or creating your particular pysical display mapping),
-  // use ApplyStaticTransformer().
-  // If you use the Transformer concept to modify writes to canvases on-the-fly,
-  // use them directly as such.
-  //
-  // DO NOT USE. WILL BE REMOVED.
-  void SetTransformer(CanvasTransformer *t) __attribute__((deprecated)) {
-    transformer_ = t;
-    if (t) ApplyStaticTransformer(*t);
-  }
-
-  // DO NOT USE. WILL BE REMOVED.
-  CanvasTransformer *transformer() __attribute__((deprecated)) {
-    return transformer_;
-  }
-
   // -- Canvas interface. These write to the active FrameCanvas
   // (see documentation in canvas.h)
   virtual int width() const;
@@ -281,9 +298,34 @@ public:
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
+
+#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+  //--- deprecated section: transformers. Use PixelMapper instead.
+  void ApplyStaticTransformer(const CanvasTransformer &transformer) __attribute__((deprecated)) {
+    ApplyStaticTransformerDeprecated(transformer);
+  }
+  void SetTransformer(CanvasTransformer *t) __attribute__((deprecated)) {
+    transformer_ = t;
+    if (t) ApplyStaticTransformerDeprecated(*t);
+  }
+  CanvasTransformer *transformer() __attribute__((deprecated)) {
+    return transformer_;
+  }
+  // --- end deprecated section.
+#endif  // INCLUDE_DEPRECATED_TRANSFORMERS
+
 private:
   class UpdateThread;
   friend class UpdateThread;
+
+  // Apply pixel mappers that have been passed down via a configuration
+  // string.
+  void ApplyNamedPixelMappers(const char *pixel_mapper_config,
+                              int chain, int parallel);
+
+#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+  void ApplyStaticTransformerDeprecated(const CanvasTransformer &transformer);
+#endif  // REMOVE_DEPRECATED_TRANSFORMERS
 
   Options params_;
   bool do_luminance_correct_;
@@ -292,10 +334,12 @@ private:
 
   GPIO *io_;
   Mutex active_frame_sync_;
+#ifndef REMOVE_DEPRECATED_TRANSFORMERS
   CanvasTransformer *transformer_;  // deprecated. To be removed.
+#endif
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
-  internal::PixelMapper *shared_pixel_mapper_;
+  internal::PixelDesignatorMap *shared_pixel_mapper_;
 };
 
 class FrameCanvas : public Canvas {

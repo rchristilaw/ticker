@@ -25,6 +25,8 @@
 
 #include <vector>
 
+#include "multiplex-mappers-internal.h"
+
 namespace rgb_matrix {
 RuntimeOptions::RuntimeOptions() :
 #ifdef RGB_SLOWDOWN_GPIO
@@ -145,6 +147,12 @@ static bool FlagInit(int &argc, char **&argv,
       if (ConsumeStringFlag("rgb-sequence", it, end,
                             &mopts->led_rgb_sequence, &err))
         continue;
+      if (ConsumeStringFlag("pixel-mapper", it, end,
+                            &mopts->pixel_mapper_config, &err))
+        continue;
+      if (ConsumeStringFlag("panel-type", it, end,
+                            &mopts->panel_type, &err))
+        continue;
       if (ConsumeIntFlag("rows", it, end, &mopts->rows, &err))
         continue;
       if (ConsumeIntFlag("cols", it, end, &mopts->cols, &err))
@@ -163,6 +171,9 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeIntFlag("pwm-lsb-nanoseconds", it, end,
                          &mopts->pwm_lsb_nanoseconds, &err))
+        continue;
+      if (ConsumeIntFlag("pwm-dither-bits", it, end,
+                         &mopts->pwm_dither_bits, &err))
         continue;
       if (ConsumeIntFlag("row-addr-type", it, end,
                          &mopts->row_address_type, &err))
@@ -210,7 +221,7 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       }
       if (strncmp(*it, OPTION_PREFIX, OPTION_PREFIX_LEN) == 0) {
-        fprintf(stderr, "Option %s starts with %s but it is unkown. Typo?\n",
+        fprintf(stderr, "Option %s starts with %s but it is unknown. Typo?\n",
                 *it, OPTION_PREFIX);
       }
     }
@@ -283,13 +294,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
     return NULL;
   }
 
-  if (runtime_options.do_gpio_init && getuid() != 0) {
-    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command\n");
-    return NULL;
-  }
-
-  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 4) {
+  // For the Pi4, we might need 2, maybe up to 4. Let's open up to 5.
+  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 5) {
     fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
             runtime_options.gpio_slowdown);
     return NULL;
@@ -298,6 +304,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
   static GPIO io;  // This static var is a little bit icky.
   if (runtime_options.do_gpio_init &&
       !io.Init(runtime_options.gpio_slowdown)) {
+    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
+            "Prepend 'sudo' to the command\n");
     return NULL;
   }
 
@@ -322,6 +330,18 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
   return result;
 }
 
+static std::string CreateAvailableMultiplexString(
+  const internal::MuxMapperList &m) {
+  std::string result;
+  char buffer[256];
+  for (size_t i = 0; i < m.size(); ++i) {
+    if (i != 0) result.append("; ");
+    snprintf(buffer, sizeof(buffer), "%d=%s", (int) i+1, m[i]->GetName());
+    result.append(buffer);
+  }
+  return result;
+}
+
 // Public interface.
 RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
                                  RGBMatrix::Options *m_opt_in,
@@ -340,6 +360,16 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
 
 void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
                       const RuntimeOptions &r) {
+  const internal::MuxMapperList &muxers
+    = internal::GetRegisteredMultiplexMappers();
+
+  std::vector<std::string> mapper_names = GetAvailablePixelMappers();
+  std::string available_mappers;
+  for (size_t i = 0; i < mapper_names.size(); ++i) {
+    if (i != 0) available_mappers.append(", ");
+    available_mappers.append("\"").append(mapper_names[i]).append("\"");
+  }
+
   fprintf(out,
           "\t--led-gpio-mapping=<name> : Name of GPIO mapping used. Default \"%s\"\n"
           "\t--led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64."
@@ -350,12 +380,15 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
           "(Default: %d).\n"
-          "\t--led-multiplexing=<0..4> : Mux type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip (Default: 0)\n"
+          "\t--led-multiplexing=<0..%d> : Mux type: 0=direct; %s (Default: 0)\n"
+          "\t--led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.\n"
+          "\t                            Optional params after a colon e.g. \"U-mapper;Rotate:90\"\n"
+          "\t                            Available: %s. Default: \"\"\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
-          "\t--led-row-addr-type=<0..2>: 0 = default; 1 = AB-addressed panels; 2 = direct row select"
+          "\t--led-row-addr-type=<0..3>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels "
           "(Default: 0).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
           "\t--led-%sinverse             "
@@ -364,9 +397,14 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "swapped (Default: \"RGB\")\n"
           "\t--led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB "
           "(Default: %d)\n"
-          "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n",
+          "\t--led-pwm-dither-bits=<0..2> : Time dithering of lower bits "
+          "(Default: 0)\n"
+          "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n"
+          "\t--led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'\n",
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
+          (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
+          available_mappers.c_str(),
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
@@ -374,7 +412,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           !d.disable_hardware_pulsing ? "no-" : "",
           !d.disable_hardware_pulsing ? "Don't u" : "U");
 
-  fprintf(out, "\t--led-slowdown-gpio=<0..2>: "
+  fprintf(out, "\t--led-slowdown-gpio=<0..4>: "
           "Slowdown GPIO. Needed for faster Pis/slower panels "
           "(Default: %d).\n", r.gpio_slowdown);
   if (r.daemon >= 0) {
@@ -414,13 +452,16 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (multiplexing < 0 || multiplexing > 4) {
-    err->append("Multiplexing can only be one of 0 (normal), 1 (snake), 2 (checkered), 3 (spiral), 4 (Z-stripe)\n");
+  const internal::MuxMapperList &muxers
+    = internal::GetRegisteredMultiplexMappers();
+  if (multiplexing < 0 || multiplexing > (int)muxers.size()) {
+    err->append("Multiplexing can only be one of 0=normal; ")
+      .append(CreateAvailableMultiplexString(muxers));
     success = false;
   }
 
-  if (row_address_type < 0 || row_address_type > 2) {
-    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select)\n");
+  if (row_address_type < 0 || row_address_type > 3) {
+    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select), 3 ABC address.\n");
     success = false;
   }
 
@@ -446,6 +487,11 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
 
   if (pwm_lsb_nanoseconds < 50 || pwm_lsb_nanoseconds > 3000) {
     err->append("Invalid range of pwm-lsb-nanoseconds (50..3000 allowed).\n");
+    success = false;
+  }
+
+  if (pwm_dither_bits < 0 || pwm_dither_bits > 2) {
+    err->append("Inavlid range of pwm-dither-bits (0..2 allowed).\n");
     success = false;
   }
 

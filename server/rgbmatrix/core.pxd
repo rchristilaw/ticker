@@ -16,7 +16,8 @@ cdef class RGBMatrixOptions:
     # otherwise, when the Options struct is used, it will be garbage collected
     cdef bytes __py_encoded_hardware_mapping
     cdef bytes __py_encoded_led_rgb_sequence
-
+    cdef bytes __py_encoded_pixel_mapper_config
+    cdef bytes __py_encoded_panel_type
 
 # Local Variables:
 # mode: python
