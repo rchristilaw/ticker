@@ -2,5 +2,5 @@ python-dateutil==2.6.1
 pytz==2018.3
 requests==2.20.0
 Flask==1.0
-Flask-Cors==3.0.3
+Flask-Cors==3.0.9
 nhlapi==0.0.3
